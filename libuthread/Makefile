@@ -1,5 +1,5 @@
 lib     := libuthread.a
-objs    := sem.o tps.o
+objs    := sem.o #tps.o
 
 CC      := gcc
 CFLAGS  := -Wall -Werror

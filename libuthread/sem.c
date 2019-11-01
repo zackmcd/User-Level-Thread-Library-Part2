@@ -13,16 +13,24 @@ struct semaphore {
 sem_t sem_create(size_t count)
 {
   sem_t sem = (sem_t)malloc(sizeof(sem_t));
+
   if (!sem)
     return NULL;
+
   sem->count = count;
   sem->blocked_threads = queue_create();
+  
+  if (!sem->blocked_threads)
+    return NULL;
+  
+  return sem;
 }
 
 int sem_destroy(sem_t sem)
 {
   if (!sem)
     return -1;
+  
   free(sem);
   return 0;
 }
@@ -32,18 +40,22 @@ int sem_down(sem_t sem)
   if (!sem)
     return -1;
 
-  // disable interrupts
+  enter_critical_section();
 
-  if (sem->count >= 0)
+  if (sem->count >= 0) // there is a resource to be used
   {
     sem->count--;
-    //enable interrupts
+    exit_critical_section();
     return 0;
   }
-
-  //enqueue(sem->blocked_threads, //current thread )
-  //enable interrupts
-  return 0; // maybe not return 0
+  else // if there are no more resources available and we must block the thread
+  {
+    pthread_t tid = pthread_self();
+    queue_enqueue(sem->blocked_threads, (void *)tid);
+    thread_block();
+    exit_critical_section();
+    return 0;
+  }
 }
 
 int sem_up(sem_t sem)
@@ -51,21 +63,26 @@ int sem_up(sem_t sem)
   if (!sem)
     return -1;
 
-  //disbale interrupts
+  enter_critical_section();
+
   if (queue_length(sem->blocked_threads) == 0)
   {
     sem->count++;
   }
   else
   {
-    // temp thread = dequeue(sem->blocked_threads);
-    // unblock thread with tid
+    pthread_t tid;
+    queue_dequeue(sem->blocked_threads, (void **)&tid); 
+    thread_unblock(tid);
   }
-  //enable interrupts
+  
+  exit_critical_section();
+  return 0;
+
 }
 
 int sem_getvalue(sem_t sem, int *sval)
 {
-	/* TODO Phase 1 */
+  return 0;
 }
 
