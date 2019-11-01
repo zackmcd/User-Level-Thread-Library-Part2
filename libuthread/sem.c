@@ -42,7 +42,7 @@ int sem_down(sem_t sem)
 
   enter_critical_section();
 
-  if (sem->count >= 0) // there is a resource to be used
+  if (sem->count > 0) // there is a resource to be used
   {
     sem->count--;
     exit_critical_section();

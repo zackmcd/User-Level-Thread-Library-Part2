@@ -1,5 +1,6 @@
 lib     := libuthread.a
-objs    := sem.o #tps.o
+objs    := sem.o tps.o queue.o thread.o
+del     := sem.o tps.o
 
 CC      := gcc
 CFLAGS  := -Wall -Werror
@@ -28,4 +29,4 @@ libuthread.a : $(objs)
 
 clean :
 	@echo "clean"
-	$(Q)rm -f $(lib) $(objs) $(deps)
+	$(Q)rm -f $(lib) $(del) $(deps)
