@@ -6,7 +6,7 @@
 #include "thread.h"
 
 struct semaphore {
-  size_t count;
+  int count;
   queue_t blocked_threads;
 };
 
@@ -29,12 +29,39 @@ int sem_destroy(sem_t sem)
 
 int sem_down(sem_t sem)
 {
-	/* TODO Phase 1 */
+  if (!sem)
+    return -1;
+
+  // disable interrupts
+
+  if (sem->count >= 0)
+  {
+    sem->count--;
+    //enable interrupts
+    return 0;
+  }
+
+  //enqueue(sem->blocked_threads, //current thread )
+  //enable interrupts
+  return 0; // maybe not return 0
 }
 
 int sem_up(sem_t sem)
 {
-	/* TODO Phase 1 */
+  if (!sem)
+    return -1;
+
+  //disbale interrupts
+  if (queue_length(sem->blocked_threads) == 0)
+  {
+    sem->count++;
+  }
+  else
+  {
+    // temp thread = dequeue(sem->blocked_threads);
+    // unblock thread with tid
+  }
+  //enable interrupts
 }
 
 int sem_getvalue(sem_t sem, int *sval)
