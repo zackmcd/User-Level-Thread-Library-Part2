@@ -83,6 +83,18 @@ int sem_up(sem_t sem)
 
 int sem_getvalue(sem_t sem, int *sval)
 {
+  if (!sem || !sval)
+    return -1;
+
+  if (sem->count > 0)
+  {
+    *sval = sem->count;
+  }
+  else if (sem->count == 0)
+  {
+    *sval = -1 * queue_length(sem->blocked_threads);
+  }
+  
   return 0;
 }
 
