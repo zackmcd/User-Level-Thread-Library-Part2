@@ -12,41 +12,35 @@
 #include "thread.h"
 #include "tps.h"
 
-/* TODO: Phase 2 */
+
 
 int tps_init(int segv)
 {
-	/* TODO: Phase 2 */
   return 0;
 }
 
 int tps_create(void)
 {
   return 0;
-	/* TODO: Phase 2 */
 }
 
 int tps_destroy(void)
 {
   return 0;
-	/* TODO: Phase 2 */
 }
 
 int tps_read(size_t offset, size_t length, char *buffer)
 {
   return 0;
-	/* TODO: Phase 2 */
 }
 
 int tps_write(size_t offset, size_t length, char *buffer)
 {
   return 0;
-	/* TODO: Phase 2 */
 }
 
 int tps_clone(pthread_t tid)
 {
   return 0;
-	/* TODO: Phase 2 */
 }
 
