@@ -42,15 +42,23 @@ int tps_init(int segv)
     return -1;
 
   tps_threads = queue_create();
+  
   //signal handling
+  /*if(segv) 
+  {
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = segv_handler;
+    sigaction(SIGBUS, &sa, NULL);
+    sigaction(SIGSEGV, &sa, NULL);
+  }*/
+
   return 0;
 }
 
 int tps_create(void)
 {
-  if (!tps_threads)
-    tps_init();
-
   tps_t check = NULL;
   pthread_t tid = pthread_self();
   queue_iterate(tps_threads, is_tid, (void*)(&tid), (void**)&check);
@@ -67,7 +75,7 @@ int tps_create(void)
     return -1;
   t->page = p;
   t->page->count = 1;
-  t->page->mem_add = //mmap;
+  //t->page->mem_add = //mmap;
   queue_enqueue(tps_threads, (void*)t);
 
   return 0;
@@ -75,6 +83,23 @@ int tps_create(void)
 
 int tps_destroy(void)
 {
+  tps_t t = NULL;
+  pthread_t tid = pthread_self();
+  queue_iterate(tps_threads, is_tid, (void*)&tid, (void**)&t);
+
+  if (!t)
+    return -1;
+
+  if (t->page->count <= 1)
+  {
+    free(t->page);
+  }
+  else
+  {
+    t->page->count--;
+  }
+
+  free(t);
   return 0;
 }
 
