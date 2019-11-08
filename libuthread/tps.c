@@ -105,12 +105,53 @@ int tps_destroy(void)
 
 int tps_read(size_t offset, size_t length, char *buffer)
 {
+  //check if thread has a tps
+  tps_t tps = NULL;
+  pthread_t tid = pthread_self();
+  queue_iterate(tps_threads, is_tid, (void*)(&tid), (void**)&tps);
+  //if no tps
+  if (!tps)
+    return -1;
+
+  void* add_oset = tps->page->mem_add + offset;
+  void* out_bounds = tps->page->mem_add + TPS_SIZE;
+  void* mem_read = add_oset + length;
+
+  //if offset + memory address + length is too large, outside bounds
+  if(mem_read > out_bounds)
+    return -1;
+
+  memcpy(buffer, add_oset, length);
+
+  if(buffer == NULL)
+    return -1;
   
   return 0;
 }
 
 int tps_write(size_t offset, size_t length, char *buffer)
 {
+  tps_t tps = NULL;
+  pthread_t tid = pthread_self();
+  queue_iterate(tps_threads, is_tid, (void*)(&tid), (void**)&tps);
+  //if current thread doesn't have a tps
+  if (!tps)
+    return -1;
+
+  void* add_oset = tps->page->mem_add + offset;
+  void* out_bounds = tps->page->mem_add + TPS_SIZE;
+  void* mem_read = add_oset + length;
+
+  if(mem_read > out_bounds)
+    return -1;
+
+  //if(tps->page->count > 1)
+    //copy-on-write first
+  memset(add_oset, *buffer, length);
+
+  //if(buffer == NULL)
+    return -1;
+
   return 0;
 }
 
