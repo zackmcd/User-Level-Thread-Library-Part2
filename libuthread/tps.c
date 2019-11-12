@@ -14,20 +14,21 @@
 
 typedef struct page
 {
-  int count;
-  void *mem_add;
+  int count; // stores how many threads point to a given page
+  void *mem_add; // address of tps
 }page, *page_t;
 
 typedef struct tps
 {
-  pthread_t thread;
-  page_t page;
+  pthread_t thread; // tid of thread
+  page_t page; // page that this thread points to
 }tps, *tps_t;
 
 queue_t tps_threads;
 
 static int is_tid(void *data, void *arg)
 {
+  // checks if the tids are the same or not	
   tps_t tps = (tps_t)data;
   pthread_t tid = *(pthread_t*)arg;
   if (tps->thread == tid)
@@ -38,6 +39,7 @@ static int is_tid(void *data, void *arg)
 
 static int find_add(void *data, void *arg)
 {
+  // checks if the addresses are the same or not
   tps_t tps = (tps_t)data;
   if (tps->page->mem_add == arg)
     return 1;
@@ -72,10 +74,10 @@ static void segv_handler(int sig, siginfo_t *si, void *context)
 
 int tps_init(int segv)
 {
-  if (tps_threads)
+  if (tps_threads) // checks if the queue has already been initialized
     return -1;
 
-  tps_threads = queue_create();
+  tps_threads = queue_create(); // initializes queue
   
   //signal handling
   if(segv) 
@@ -95,22 +97,23 @@ int tps_create(void)
 {
   tps_t check = NULL;
   pthread_t tid = pthread_self();
+  // checks if the current thread has already been created
   queue_iterate(tps_threads, is_tid, (void*)(&tid), (void**)&check);
   if (check)
     return -1;
 
-  tps_t t = (tps_t)malloc(sizeof(tps));
+  tps_t t = (tps_t)malloc(sizeof(tps)); // create new tps
   if (!t)
     return -1;
   t->thread = tid;
   
-  page_t p = (page_t)malloc(sizeof(page));
+  page_t p = (page_t)malloc(sizeof(page)); // create new thread
   if (!p)
     return -1;
   t->page = p;
   t->page->count = 1;
   t->page->mem_add = mmap(NULL, TPS_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  queue_enqueue(tps_threads, (void*)t);
+  queue_enqueue(tps_threads, (void*)t); // place it in list of threads
 
   return 0;
 }
@@ -124,16 +127,16 @@ int tps_destroy(void)
   if (!t)
     return -1;
 
-  if (t->page->count == 1)
+  if (t->page->count == 1) // if there is only 1 count then u free it
   {
     free(t->page);
   }
-  else
+  else // if there are others still pointing to the page dont free it
   {
     t->page->count--;
   }
 
-  free(t);
+  free(t); // free this threads tps
   return 0;
 }
 
@@ -154,7 +157,8 @@ int tps_read(size_t offset, size_t length, char *buffer)
   //if offset + memory address + length is too large, outside bounds
   if(length + offset > TPS_SIZE)
     return -1;
-
+  
+  // use mprotect to change read rights then change it back after read
   mprotect(tps->page->mem_add, TPS_SIZE, PROT_READ);
   memcpy(buffer, tps->page->mem_add + offset, length);
   mprotect(tps->page->mem_add, TPS_SIZE, PROT_NONE);
@@ -180,7 +184,7 @@ int tps_write(size_t offset, size_t length, char *buffer)
     return -1;
 
   //more than 1 thread points to this page
-  if(tps->page->count > 1)
+  if(tps->page->count > 1) // this is used when there is a copy on write
   {
     page_t new_page = (page_t)malloc(sizeof(page));
     new_page->count = 1;
@@ -212,12 +216,15 @@ int tps_clone(pthread_t tid)
   tps_t current_thread = NULL;
   pthread_t current_tid = pthread_self();
   tps_t given_thread = NULL;
+
+  // checks if current thread hasnt been created yet and that given thread has been
   queue_iterate(tps_threads, is_tid, (void*)(&current_tid), (void**)&current_thread);
   queue_iterate(tps_threads, is_tid, (void*)(&tid), (void**)&given_thread);
 
   if (!given_thread || current_thread)
     return -1;
 
+  // copoies all the stuff from given thread into current thread
   given_thread->page->count = given_thread->page->count + 1;
   current_thread = (tps_t)malloc(sizeof(tps)); 
   current_thread->page = given_thread->page;
