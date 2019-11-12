@@ -1,3 +1,5 @@
+Project 3 User Level Thread Library Part 2
+
 For the semaphore API, we created a structure of semaphores that contained an
 integer count and a queue for blocked threads. The count kept track of how many
 resources were currently available, and as long as there was one, we would use
@@ -29,8 +31,17 @@ privileges first, and then copy the contents (and alter them) into the new
 address with our already initialized writing privileges. At the end we change
 everything back to having no privileges and decrement the count of the old
 memory address since one less thread is using its’ address.
-In tps clone, we iterate on the queue to ensure the tid needing to be cloned is indeed a thread and enqueued, and that the current thread does not already
+In tps clone, we iterate on the queue to ensure the tid needing to be cloned 
+is indeed a thread and enqueued, and that the current thread does not already
 exist, then we set up the current thread with cloned information (initializing
 everything the same). This makes the given tid’s count increment as well,
 because now two threads (or more depending on how many clones already exist)
 use the same memory address.
+
+For testing this threaded library, we had multiple programs ensure that our 
+semaphores were implemented correctly. In addition, the tps was tested by tps.c
+which tests reading, writing, and cloning. In tps_segfault.c, we test our
+implementation in how we handle segfaults. If we have a regular segfault then 
+it will show this error, but if we have a segfault because one thread is trying
+to access another thread's private storage then it will print out an additional
+error message. This allows us to make sure the tps is actuall private storage.
